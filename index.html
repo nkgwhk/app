@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ガチャゲーム</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: white;
+        text-align: center;
+        padding: 20px;
+    }
+
+    h1 {
+        margin-bottom: 10px;
+    }
+
+    #gachaBox {
+        width: 300px;
+        height: 200px;
+        margin: 20px auto;
+        background: rgba(255,255,255,0.1);
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        transition: all 0.3s ease;
+    }
+
+    button {
+        padding: 12px 25px;
+        font-size: 18px;
+        border: none;
+        border-radius: 8px;
+        background: gold;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    button:hover {
+        transform: scale(1.05);
+    }
+
+    #result {
+        margin-top: 20px;
+        font-size: 26px;
+        font-weight: bold;
+    }
+
+    .rare { color: #4dd0e1; }
+    .super { color: #ff4081; }
+    .ultra { color: gold; text-shadow: 0 0 10px gold; }
+
+    @keyframes shake {
+        0% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        50% { transform: translateX(10px); }
+        75% { transform: translateX(-10px); }
+        100% { transform: translateX(0); }
+    }
+
+    .shaking {
+        animation: shake 0.5s;
+    }
+
+    .info {
+        max-width: 500px;
+        margin: 30px auto;
+        text-align: left;
+        background: rgba(0,0,0,0.3);
+        padding: 15px;
+        border-radius: 10px;
+    }
+
+    h2 {
+        margin-top: 0;
+    }
+
+    ul {
+        padding-left: 20px;
+    }
+</style>
+</head>
+<body>
+
+<h1>🎰 ガチャゲーム</h1>
+
+<div id="gachaBox">ボタンを押してガチャ！</div>
+
+<button onclick="drawGacha()">ガチャを引く</button>
+
+<div id="result"></div>
+
+<div class="info">
+    <h2>💡 このゲームでできること</h2>
+    <ul>
+        <li>ボタンを押してランダムガチャを引く</li>
+        <li>レアリティ（N / R / SR / UR）の抽選</li>
+        <li>ガチャ時の揺れ演出</li>
+        <li>レア度に応じた色変化</li>
+        <li>URが出た時の特別演出</li>
+    </ul>
+
+    <h2>🔧 改造アイデア</h2>
+    <ul>
+        <li>10連ガチャを追加</li>
+        <li>キャラ画像を表示</li>
+        <li>排出確率を細かく設定</li>
+        <li>ガチャ履歴を保存</li>
+        <li>音やBGMを追加（かなりゲームっぽくなる）</li>
+        <li>アニメーションを豪華に（光・フェードなど）</li>
+    </ul>
+</div>
+
+<script>
+const characters = [
+    { name: "スライム", rarity: "N", class: "" },
+    { name: "ゴブリン", rarity: "N", class: "" },
+    { name: "ナイト", rarity: "R", class: "rare" },
+    { name: "魔法使い", rarity: "R", class: "rare" },
+    { name: "ドラゴン", rarity: "SR", class: "super" },
+    { name: "天使", rarity: "SR", class: "super" },
+    { name: "魔王", rarity: "UR", class: "ultra" }
+];
+
+function drawGacha() {
+    const box = document.getElementById("gachaBox");
+    const result = document.getElementById("result");
+
+    result.textContent = "";
+    result.className = "";
+
+    box.classList.add("shaking");
+    box.textContent = "ガチャ中...";
+
+    setTimeout(() => {
+        box.classList.remove("shaking");
+
+        const rand = Math.random();
+        let selected;
+
+        if (rand < 0.5) {
+            selected = characters[Math.floor(Math.random() * 2)];
+        } else if (rand < 0.8) {
+            selected = characters[2 + Math.floor(Math.random() * 2)];
+        } else if (rand < 0.95) {
+            selected = characters[4 + Math.random() * 2 | 0];
+        } else {
+            selected = characters[6];
+        }
+
+        box.textContent = selected.rarity + " 獲得！";
+        result.textContent = selected.name;
+        result.className = selected.class;
+
+        if (selected.rarity === "UR") {
+            alert("✨ URゲット！！ ✨");
+        }
+
+    }, 800);
+}
+</script>
+
+</body>
+</html>
