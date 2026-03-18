@@ -2,165 +2,172 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>ガチャゲーム</title>
+<title>シンプルダンジョンゲーム</title>
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background: linear-gradient(135deg, #1e3c72, #2a5298);
-        color: white;
-        text-align: center;
-        padding: 20px;
-    }
+body {
+    font-family: sans-serif;
+    background: #111;
+    color: #fff;
+    text-align: center;
+}
 
-    h1 {
-        margin-bottom: 10px;
-    }
+#game {
+    margin-top: 30px;
+}
 
-    #gachaBox {
-        width: 300px;
-        height: 200px;
-        margin: 20px auto;
-        background: rgba(255,255,255,0.1);
-        border-radius: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-        transition: all 0.3s ease;
-    }
+.bar {
+    width: 300px;
+    height: 20px;
+    background: #444;
+    margin: 10px auto;
+    border-radius: 10px;
+    overflow: hidden;
+}
 
-    button {
-        padding: 12px 25px;
-        font-size: 18px;
-        border: none;
-        border-radius: 8px;
-        background: gold;
-        cursor: pointer;
-        transition: 0.2s;
-    }
+.hp {
+    height: 100%;
+    background: #4caf50;
+}
 
-    button:hover {
-        transform: scale(1.05);
-    }
+.enemy-hp {
+    background: #f44336;
+}
 
-    #result {
-        margin-top: 20px;
-        font-size: 26px;
-        font-weight: bold;
-    }
+button {
+    padding: 10px 20px;
+    margin: 10px;
+    font-size: 16px;
+    cursor: pointer;
+}
 
-    .rare { color: #4dd0e1; }
-    .super { color: #ff4081; }
-    .ultra { color: gold; text-shadow: 0 0 10px gold; }
-
-    @keyframes shake {
-        0% { transform: translateX(0); }
-        25% { transform: translateX(-10px); }
-        50% { transform: translateX(10px); }
-        75% { transform: translateX(-10px); }
-        100% { transform: translateX(0); }
-    }
-
-    .shaking {
-        animation: shake 0.5s;
-    }
-
-    .info {
-        max-width: 500px;
-        margin: 30px auto;
-        text-align: left;
-        background: rgba(0,0,0,0.3);
-        padding: 15px;
-        border-radius: 10px;
-    }
-
-    h2 {
-        margin-top: 0;
-    }
-
-    ul {
-        padding-left: 20px;
-    }
+#log {
+    height: 120px;
+    overflow-y: auto;
+    border: 1px solid #555;
+    padding: 10px;
+    margin-top: 10px;
+}
 </style>
 </head>
 <body>
 
-<h1>🎰 ガチャゲーム</h1>
+<h1>🗡️ ダンジョンアタック</h1>
 
-<div id="gachaBox">ボタンを押してガチャ！</div>
+<div id="game">
 
-<button onclick="drawGacha()">ガチャを引く</button>
+    <p>階層: <span id="floor">1</span></p>
 
-<div id="result"></div>
+    <h2>プレイヤー</h2>
+    <p>HP: <span id="playerHpText"></span></p>
+    <div class="bar"><div id="playerHpBar" class="hp"></div></div>
 
-<div class="info">
-    <h2>💡 このゲームでできること</h2>
-    <ul>
-        <li>ボタンを押してランダムガチャを引く</li>
-        <li>レアリティ（N / R / SR / UR）の抽選</li>
-        <li>ガチャ時の揺れ演出</li>
-        <li>レア度に応じた色変化</li>
-        <li>URが出た時の特別演出</li>
-    </ul>
+    <h2>敵</h2>
+    <p id="enemyName"></p>
+    <p>HP: <span id="enemyHpText"></span></p>
+    <div class="bar"><div id="enemyHpBar" class="hp enemy-hp"></div></div>
 
-    <h2>🔧 改造アイデア</h2>
-    <ul>
-        <li>10連ガチャを追加</li>
-        <li>キャラ画像を表示</li>
-        <li>排出確率を細かく設定</li>
-        <li>ガチャ履歴を保存</li>
-        <li>音やBGMを追加（かなりゲームっぽくなる）</li>
-        <li>アニメーションを豪華に（光・フェードなど）</li>
-    </ul>
+    <button onclick="attack()">攻撃</button>
+    <button onclick="heal()">回復</button>
+
+    <div id="log"></div>
+
 </div>
 
 <script>
-const characters = [
-    { name: "スライム", rarity: "N", class: "" },
-    { name: "ゴブリン", rarity: "N", class: "" },
-    { name: "ナイト", rarity: "R", class: "rare" },
-    { name: "魔法使い", rarity: "R", class: "rare" },
-    { name: "ドラゴン", rarity: "SR", class: "super" },
-    { name: "天使", rarity: "SR", class: "super" },
-    { name: "魔王", rarity: "UR", class: "ultra" }
-];
+let player = {
+    maxHp: 100,
+    hp: 100,
+    atk: 10,
+    level: 1
+};
 
-function drawGacha() {
-    const box = document.getElementById("gachaBox");
-    const result = document.getElementById("result");
+let enemy = {};
+let floor = 1;
 
-    result.textContent = "";
-    result.className = "";
-
-    box.classList.add("shaking");
-    box.textContent = "ガチャ中...";
-
-    setTimeout(() => {
-        box.classList.remove("shaking");
-
-        const rand = Math.random();
-        let selected;
-
-        if (rand < 0.5) {
-            selected = characters[Math.floor(Math.random() * 2)];
-        } else if (rand < 0.8) {
-            selected = characters[2 + Math.floor(Math.random() * 2)];
-        } else if (rand < 0.95) {
-            selected = characters[4 + Math.random() * 2 | 0];
-        } else {
-            selected = characters[6];
-        }
-
-        box.textContent = selected.rarity + " 獲得！";
-        result.textContent = selected.name;
-        result.className = selected.class;
-
-        if (selected.rarity === "UR") {
-            alert("✨ URゲット！！ ✨");
-        }
-
-    }, 800);
+function createEnemy() {
+    enemy = {
+        name: "モンスター Lv." + floor,
+        maxHp: 50 + floor * 20,
+        hp: 50 + floor * 20,
+        atk: 5 + floor * 3
+    };
 }
+
+function updateUI() {
+    document.getElementById("floor").textContent = floor;
+
+    document.getElementById("playerHpText").textContent = player.hp + "/" + player.maxHp;
+    document.getElementById("enemyHpText").textContent = enemy.hp + "/" + enemy.maxHp;
+
+    document.getElementById("enemyName").textContent = enemy.name;
+
+    document.getElementById("playerHpBar").style.width = (player.hp / player.maxHp * 100) + "%";
+    document.getElementById("enemyHpBar").style.width = (enemy.hp / enemy.maxHp * 100) + "%";
+}
+
+function log(text) {
+    let logDiv = document.getElementById("log");
+    logDiv.innerHTML += text + "<br>";
+    logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+function attack() {
+    let damage = Math.floor(Math.random() * player.atk) + 5;
+    enemy.hp -= damage;
+    log("あなたの攻撃！ " + damage + " ダメージ");
+
+    if (enemy.hp <= 0) {
+        log("敵を倒した！");
+        nextFloor();
+        return;
+    }
+
+    enemyAttack();
+    updateUI();
+}
+
+function enemyAttack() {
+    let damage = Math.floor(Math.random() * enemy.atk);
+    player.hp -= damage;
+    log("敵の攻撃！ " + damage + " ダメージ");
+
+    if (player.hp <= 0) {
+        gameOver();
+    }
+}
+
+function heal() {
+    let amount = 20;
+    player.hp += amount;
+    if (player.hp > player.maxHp) player.hp = player.maxHp;
+    log("回復した！ +" + amount);
+
+    enemyAttack();
+    updateUI();
+}
+
+function nextFloor() {
+    floor++;
+
+    player.level++;
+    player.maxHp += 10;
+    player.hp = player.maxHp;
+    player.atk += 2;
+
+    log("レベルアップ！");
+
+    createEnemy();
+    updateUI();
+}
+
+function gameOver() {
+    alert("ゲームオーバー！");
+    location.reload();
+}
+
+// 初期化
+createEnemy();
+updateUI();
 </script>
 
 </body>
